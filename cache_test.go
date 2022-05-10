@@ -4,6 +4,7 @@ import (
 	"github.com/clambin/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -61,5 +62,7 @@ func TestCacheScrubber(t *testing.T) {
 		return c.Len() == 0
 	}, 200*time.Millisecond, 50*time.Millisecond)
 
-	c.Stop()
+	c = nil
+	runtime.GC()
+	time.Sleep(10 * time.Millisecond)
 }

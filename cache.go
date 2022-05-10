@@ -7,17 +7,11 @@ import (
 )
 
 type Cache[K comparable, V any] struct {
-	*cache[K, V]
+	*realCache[K, V]
 	*scrubber[K, V]
 }
 
-func (c Cache[K, V]) Stop() {
-	if c.scrubber != nil {
-		c.scrubber.halt <- struct{}{}
-	}
-}
-
-type cache[K comparable, V any] struct {
+type realCache[K comparable, V any] struct {
 	values     map[K]entry[V]
 	expiration time.Duration
 	lock       sync.RWMutex
@@ -29,16 +23,17 @@ type entry[V any] struct {
 }
 
 func New[K comparable, V any](expiration, cleanup time.Duration) (c *Cache[K, V]) {
-	rc := &cache[K, V]{
-		values:     make(map[K]entry[V]),
-		expiration: expiration,
+	c = &Cache[K, V]{
+		realCache: &realCache[K, V]{
+			values:     make(map[K]entry[V]),
+			expiration: expiration,
+		},
 	}
-	c = &Cache[K, V]{cache: rc}
 	if cleanup > 0 {
 		c.scrubber = &scrubber[K, V]{
 			period: cleanup,
 			halt:   make(chan struct{}),
-			cache:  c,
+			cache:  c.realCache,
 		}
 		go c.scrubber.run()
 		runtime.SetFinalizer(c, stopScrubber[K, V])
@@ -62,17 +57,11 @@ func (c *Cache[K, V]) Get(key K) (result V, found bool) {
 	var e entry[V]
 	e, found = c.values[key]
 
-	if found == false {
-		return
+	if found == false || time.Now().After(e.expiry) {
+		return result, false
 	}
 
-	if time.Now().After(e.expiry) {
-		found = false
-		return
-	}
-
-	result = e.value
-	return
+	return e.value, true
 }
 
 func (c *Cache[K, V]) Len() int {
@@ -81,7 +70,7 @@ func (c *Cache[K, V]) Len() int {
 	return len(c.values)
 }
 
-func (c *Cache[K, V]) scrub() {
+func (c *realCache[K, V]) scrub() {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 

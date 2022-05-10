@@ -8,7 +8,7 @@ import (
 type scrubber[K comparable, V any] struct {
 	period time.Duration
 	halt   chan struct{}
-	cache  *Cache[K, V]
+	cache  *realCache[K, V]
 }
 
 func (s *scrubber[K, V]) run() {
