@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -16,7 +15,6 @@ func (s *scrubber[K, V]) run() {
 	for running := true; running; {
 		select {
 		case <-s.halt:
-			fmt.Println("stopping the scrubber")
 			running = false
 		case <-ticker.C:
 			s.cache.scrub()
