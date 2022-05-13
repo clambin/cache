@@ -50,6 +50,19 @@ func TestCacheExpiry(t *testing.T) {
 
 }
 
+func TestCache_AddWithExpiry(t *testing.T) {
+	c := cache.New[string, int](100*time.Millisecond, 0)
+	require.NotNil(t, c)
+
+	c.Add("foo", 1)
+	c.AddWithExpiry("bar", 2, time.Hour)
+	assert.Equal(t, 2, c.Len())
+
+	assert.Eventually(t, func() bool {
+		return c.Len() == 1
+	}, time.Second, 50*time.Millisecond)
+}
+
 func TestCacheScrubber(t *testing.T) {
 	c := cache.New[string, string](100*time.Millisecond, 150*time.Millisecond)
 	require.NotNil(t, c)

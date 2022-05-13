@@ -35,8 +35,8 @@ func (e entry[K]) isExpired() bool {
 	return !e.expiry.IsZero() && time.Now().After(e.expiry)
 }
 
-// New creates a new Cache for the specified key and value types.  expiration specifies how long an entry can live in the cache
-// before expiring.  cleanup specifies how often the cache should remove expired items from the cache.
+// New creates a new Cache for the specified key and value types.  expiration specifies the default time an entry can live
+// in the cache before expiring.  cleanup specifies how often the cache will remove expired items.
 func New[K comparable, V any](expiration, cleanup time.Duration) (c *Cache[K, V]) {
 	c = &Cache[K, V]{
 		realCache: &realCache[K, V]{
@@ -56,19 +56,24 @@ func New[K comparable, V any](expiration, cleanup time.Duration) (c *Cache[K, V]
 	return
 }
 
-// Add adds a value/value pair to the cache
+// Add adds a key/value pair to the cache, using the default expiry time
 func (c *Cache[K, V]) Add(key K, value V) {
+	c.AddWithExpiry(key, value, c.expiration)
+}
+
+// AddWithExpiry adds a key/value pair to the cache with a specified expiry time
+func (c *Cache[K, V]) AddWithExpiry(key K, value V, expiry time.Duration) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	expiry := time.Time{}
-	if c.expiration != 0 {
-		expiry = time.Now().Add(c.expiration)
+	e := time.Time{}
+	if expiry != 0 {
+		e = time.Now().Add(expiry)
 	}
 
 	c.values[key] = entry[V]{
 		value:  value,
-		expiry: expiry,
+		expiry: e,
 	}
 }
 
