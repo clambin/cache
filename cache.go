@@ -9,6 +9,7 @@ import (
 // Cacher implements a cache interface
 type Cacher[K comparable, V any] interface {
 	Add(key K, value V)
+	AddWithExpiry(key K, value V, expiry time.Duration)
 	Get(key K) (value V, found bool)
 }
 
