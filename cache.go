@@ -11,6 +11,7 @@ type Cacher[K comparable, V any] interface {
 	Add(key K, value V)
 	AddWithExpiry(key K, value V, expiry time.Duration)
 	Get(key K) (value V, found bool)
+	GetDefaultExpiration() time.Duration
 }
 
 // Cache implements the Cacher interface
@@ -110,6 +111,11 @@ func (c *Cache[K, V]) Len() (count int) {
 		}
 	}
 	return count
+}
+
+// 	GetDefaultExpiration returns the default expiration time of the cache
+func (c Cache[K, V]) GetDefaultExpiration() time.Duration {
+	return c.expiration
 }
 
 func (c *realCache[K, V]) scrub() {

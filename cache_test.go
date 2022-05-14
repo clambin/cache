@@ -33,6 +33,8 @@ func TestCacheExpiry(t *testing.T) {
 	c := cache.New[string, string](100*time.Millisecond, 0)
 	require.NotNil(t, c)
 
+	assert.Equal(t, 100*time.Millisecond, c.GetDefaultExpiration())
+
 	c.Add("foo", "bar")
 	value, found := c.Get("foo")
 	require.True(t, found)
