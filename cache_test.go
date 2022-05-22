@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"runtime"
+	"sort"
 	"testing"
 	"time"
 )
@@ -59,6 +60,10 @@ func TestCache_AddWithExpiry(t *testing.T) {
 	c.Add("foo", 1)
 	c.AddWithExpiry("bar", 2, time.Hour)
 	assert.Equal(t, 2, c.Len())
+
+	keys := c.GetKeys()
+	sort.Strings(keys)
+	assert.Equal(t, []string{"bar", "foo"}, keys)
 
 	assert.Eventually(t, func() bool {
 		return c.Len() == 1

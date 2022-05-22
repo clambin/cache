@@ -11,6 +11,7 @@ type Cacher[K comparable, V any] interface {
 	Add(key K, value V)
 	AddWithExpiry(key K, value V, expiry time.Duration)
 	Get(key K) (value V, found bool)
+	GetKeys() (keys []K)
 	GetDefaultExpiration() time.Duration
 }
 
@@ -79,7 +80,7 @@ func (c *Cache[K, V]) AddWithExpiry(key K, value V, expiry time.Duration) {
 	}
 }
 
-// Get retrieves the value from the cache. If the item is not found, or expired, found will be false
+// Get returns the value from the cache for the provided key. If the item is not found, or expired, found will be false
 func (c *Cache[K, V]) Get(key K) (result V, found bool) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -92,6 +93,17 @@ func (c *Cache[K, V]) Get(key K) (result V, found bool) {
 	}
 
 	return e.value, true
+}
+
+// GetKeys returns all keys in the cache.
+func (c *Cache[K, V]) GetKeys() (keys []K) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	for key := range c.values {
+		keys = append(keys, key)
+	}
+	return
 }
 
 // Size returns the current size of the cache. Expired items are counted
